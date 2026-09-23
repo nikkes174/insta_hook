@@ -65,7 +65,7 @@ async def test_verification_endpoint(monkeypatch):
 
 @pytest.mark.anyio
 async def test_duplicate_is_replied_to_once_and_self_is_skipped(monkeypatch):
-    settings = Settings(meta_verify_token="v", meta_access_token="a", meta_app_secret="s", meta_ig_user_id="own", meta_auto_reply_enabled=True, meta_auto_reply_message="hello")
+    settings = Settings(meta_verify_token="v", meta_access_token="a", meta_app_secret="s", meta_ig_user_id="own", meta_auto_reply_enabled=True, meta_auto_reply_message="hello", meta_reply_keywords=[])
     Path("data").mkdir(exist_ok=True)
     db_path = Path("data/test-webhook.db")
     db_path.unlink(missing_ok=True)

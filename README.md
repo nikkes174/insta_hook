@@ -41,6 +41,8 @@ curl -i \
 
 ```nginx
 location = /meta/instagram/webhook {
+    access_log off;
+
     proxy_pass http://127.0.0.1:8002;
 
     proxy_set_header Host $host;
@@ -68,6 +70,10 @@ Callback URL: `https://<DOMAIN>/meta/instagram/webhook`. Verify Token: знач�
 После заполнения `.env` выполните:
 
 ```bash
+set -a
+source .env
+set +a
+
 curl -X POST \
   "https://graph.instagram.com/v26.0/28201449176138547/subscribed_apps" \
   --data-urlencode "subscribed_fields=comments" \
