@@ -30,6 +30,21 @@ def test_keywords_case_insensitive_and_trimmed():
     assert any(word in "Нужна ИНСТРУКЦИЯ".casefold() for word in keywords)
 
 
+def test_settings_load_comma_separated_keywords_from_environment(monkeypatch):
+    monkeypatch.setenv("META_VERIFY_TOKEN", "verify")
+    monkeypatch.setenv("META_ACCESS_TOKEN", "access")
+    monkeypatch.setenv("META_APP_SECRET", "secret")
+    monkeypatch.setenv("META_IG_USER_ID", "28201449176138547")
+    monkeypatch.setenv("META_REPLY_KEYWORDS", " Инструкция, ссылка, гайд ")
+
+    settings = Settings(_env_file=None)
+    assert settings.meta_reply_keywords == ["Инструкция", "ссылка", "гайд"]
+
+    monkeypatch.setenv("META_REPLY_KEYWORDS", "")
+    settings = Settings(_env_file=None)
+    assert settings.meta_reply_keywords == []
+
+
 @pytest.mark.anyio
 async def test_verification_endpoint(monkeypatch):
     monkeypatch.setenv("META_VERIFY_TOKEN", "correct")
@@ -70,3 +85,24 @@ async def test_duplicate_is_replied_to_once_and_self_is_skipped(monkeypatch):
     await engine.dispose()
     db_path.unlink(missing_ok=True)
     assert calls == [("comment-1", "hello")]
+
+
+@pytest.mark.anyio
+async def test_empty_reply_message_does_not_call_graph_api(monkeypatch):
+    settings = Settings(meta_verify_token="v", meta_access_token="a", meta_app_secret="s", meta_ig_user_id="own", meta_auto_reply_enabled=True, meta_auto_reply_message="  ")
+    Path("data").mkdir(exist_ok=True)
+    db_path = Path("data/test-webhook.db")
+    db_path.unlink(missing_ok=True)
+    engine, sessions = create_database(settings.model_copy(update={"database_url": "sqlite+aiosqlite:///./data/test-webhook.db"}))
+    await init_db(engine)
+    calls = []
+
+    async def fake_reply(*args):
+        calls.append(args)
+
+    monkeypatch.setattr("app.webhook.reply_to_comment", fake_reply)
+    payload = {"entry": [{"field": "comments", "value": {"id": "comment-empty", "text": "hello", "from": {"id": "other"}}}]}
+    await process_instagram_event(payload, sessions, settings)
+    await engine.dispose()
+    db_path.unlink(missing_ok=True)
+    assert calls == []

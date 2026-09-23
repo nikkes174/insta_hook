@@ -1,7 +1,8 @@
 from functools import lru_cache
+from typing import Annotated
 
-from pydantic import field_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import Field, field_validator
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -12,7 +13,7 @@ class Settings(BaseSettings):
     meta_graph_api_version: str = "v26.0"
     meta_auto_reply_enabled: bool = False
     meta_auto_reply_message: str = ""
-    meta_reply_keywords: list[str] = []
+    meta_reply_keywords: Annotated[list[str], NoDecode] = Field(default_factory=list)
     database_url: str = "sqlite+aiosqlite:///./data/webhook.db"
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")

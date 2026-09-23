@@ -83,6 +83,8 @@ async def process_instagram_event(payload: dict[str, Any], session_factory, sett
                 logger.info("Skipping own Instagram comment_id=%s", comment_id)
             elif not settings.meta_auto_reply_enabled:
                 logger.info("Auto reply disabled for comment_id=%s", comment_id)
+            elif not settings.meta_auto_reply_message.strip():
+                logger.warning("Auto reply skipped because META_AUTO_REPLY_MESSAGE is empty; comment_id=%s", comment_id)
             else:
                 keywords = [keyword.casefold() for keyword in settings.meta_reply_keywords]
                 if keywords and not any(keyword in str(text).casefold() for keyword in keywords):
